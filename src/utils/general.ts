@@ -17,3 +17,23 @@ export function getDistance(
 
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
+
+export async function geocodeAddress(address: string) {
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address
+    )}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+  );
+
+  const data = await res.json();
+
+  if (data.status === "OK") {
+    const location = data.results[0].geometry.location;
+    return {
+      lat: location.lat,
+      lng: location.lng,
+    };
+  }
+
+  throw new Error("Adresse introuvable");
+}

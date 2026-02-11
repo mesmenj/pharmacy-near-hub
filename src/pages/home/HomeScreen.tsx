@@ -6,15 +6,22 @@ import HowItWorks from "./components/HowItWorks";
 import PharmacySpace from "./components/PharmacySpace";
 import FeaturesSection from "./components/FeaturesSection";
 import { useGeolocation } from "../../hooks/useGeolocation";
+import PharmacyMap from "../../components/PharmacyMap";
+import { geocodeAddress } from "../../utils/general";
+import { pharmacies } from "../../utils/constants";
 
 const PharmacyNearHubLanding = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [showChatModal, setShowChatModal] = useState(false);
-  const [selectedPharmacy, setSelectedPharmacy] = useState(null);
-  const [userLocation, setUserLocation] = useState(null) as any;
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>();
 
-  // console.log("location", location);
+  const [selectedPharmacy, setSelectedPharmacy] =
+    useState<Record<string, any>>();
+
+  const { location } = useGeolocation();
+
+  // console.log("location", selectedPharmacy);
   const getPosition = (): Promise<{ lat: number; lon: number }> => {
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
@@ -46,58 +53,9 @@ const PharmacyNearHubLanding = () => {
     })();
   }, []);
 
-  // Données simulées pour les pharmacies
-  // console.log("place", place);
-  const pharmacies = [
-    {
-      id: 1,
-      name: "Pharmacie Centrale",
-      address: "123 Rue Principale, Paris 75001",
-      distance: "0.5 km",
-      openingHours: "08:30 - 19:30",
-      phone: "+33 1 23 45 67 89",
-      rating: 4.8,
-      open: true,
-      specialties: ["Médicaments", "Parapharmacie", "Vaccinations"],
-    },
-    {
-      id: 2,
-      name: "Pharmacie de Garde",
-      address: "456 Avenue des Champs, Paris 75008",
-      distance: "1.2 km",
-      openingHours: "24/7",
-      phone: "+33 1 98 76 54 32",
-      rating: 4.9,
-      open: true,
-      specialties: ["Garde", "Urgences", "Conseils"],
-    },
-    {
-      id: 3,
-      name: "Pharmacie Santé Plus",
-      address: "789 Boulevard Voltaire, Paris 75011",
-      distance: "2.1 km",
-      openingHours: "09:00 - 20:00",
-      phone: "+33 1 45 67 89 01",
-      rating: 4.6,
-      open: false,
-      specialties: ["Naturel", "Homéopathie", "Nutrition"],
-    },
-    {
-      id: 4,
-      name: "Pharmacie du Quartier",
-      address: "321 Rue de Rivoli, Paris 75004",
-      distance: "1.8 km",
-      openingHours: "08:00 - 21:00",
-      phone: "+33 1 34 56 78 90",
-      rating: 4.7,
-      open: true,
-      specialties: ["Pédiatrie", "Dermatologie", "Premiers soins"],
-    },
-  ];
-
   // Filtrer les pharmacies
   const filteredPharmacies = pharmacies.filter((pharmacy) => {
-    if (activeFilter === "open") return pharmacy.open;
+    if (activeFilter === "open") return pharmacy.isOpen;
     if (activeFilter === "24h") return pharmacy.openingHours === "24/7";
     return true;
   });
@@ -106,15 +64,19 @@ const PharmacyNearHubLanding = () => {
   const searchedPharmacies = filteredPharmacies.filter(
     (pharmacy) =>
       pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacy.specialties.some((s) =>
-        s.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSearch = (e: any) => {
+  const handleSearch = async (e: any) => {
     e.preventDefault();
-    // Logique de recherche
+
+    try {
+      const coords = await geocodeAddress(searchQuery);
+
+      setMapCenter(coords); // ⭐ la carte bouge ici
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleChatWithPharmacy = (pharmacy: any) => {
@@ -123,7 +85,7 @@ const PharmacyNearHubLanding = () => {
   };
 
   const handleChatWithAll = () => {
-    setSelectedPharmacy(null);
+    setSelectedPharmacy({ lat: null, lng: null });
     setShowChatModal(true);
   };
 
@@ -154,6 +116,12 @@ const PharmacyNearHubLanding = () => {
     },
   ];
 
+  useEffect(() => {
+    if (location) {
+      setMapCenter(location);
+    }
+  }, [location]);
+
   return (
     <div className="w-full bg-[#F9FAFB] text-[#1F2937]">
       {/* Hero Section */}
@@ -167,10 +135,19 @@ const PharmacyNearHubLanding = () => {
             Localisez, contactez et naviguez vers les pharmacies autour de vous
             avec toutes les informations essentielles.
           </p>
+          {/*Map Section */}
+          <PharmacyMap
+            userPosition={location}
+            center={mapCenter}
+            pharmacies={searchedPharmacies}
+            onSelect={(pharmacy) => {
+              console.log("open pharmacy", pharmacy);
+            }}
+          />
 
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
+            <div className="relative top-5">
               <input
                 type="text"
                 value={searchQuery}

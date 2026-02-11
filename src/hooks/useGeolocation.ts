@@ -7,7 +7,7 @@ export interface Location {
 }
 
 export function useGeolocation(options?: PositionOptions) {
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] = useState<Location | undefined>();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

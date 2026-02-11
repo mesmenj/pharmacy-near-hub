@@ -108,14 +108,14 @@ function PharmacySpace({
 
               <div className="mb-6">
                 <div className="flex flex-wrap gap-2">
-                  {pharmacy.specialties.map((specialty: any, index: number) => (
+                  {/* {pharmacy.specialties.map((specialty: any, index: number) => (
                     <span
                       key={index}
                       className="bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full"
                     >
                       {specialty}
                     </span>
-                  ))}
+                  ))} */}
                 </div>
               </div>
 
