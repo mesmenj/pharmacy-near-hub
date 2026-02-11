@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { MapPin, Clock, MessageCircle, Search, Navigation } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Navigation } from "lucide-react";
 import ChatModal from "../../components/ChatModal";
 import CTA from "./components/CTA";
 import HowItWorks from "./components/HowItWorks";
@@ -7,14 +7,21 @@ import PharmacySpace from "./components/PharmacySpace";
 import FeaturesSection from "./components/FeaturesSection";
 import { useGeolocation } from "../../hooks/useGeolocation";
 import PharmacyMap from "../../components/PharmacyMap";
-import { geocodeAddress } from "../../utils/general";
-import { pharmacies } from "../../utils/constants";
+import { geocodeAddress, getDistanceKm } from "../../utils/general";
+import use_init from "../../utils/useInit";
+import { useSelector } from "react-redux";
+import type { STATE } from "../../store/state";
 
 const PharmacyNearHubLanding = () => {
+  const {} = use_init();
+
+  const { dataPharmacy } = useSelector((state: STATE) => state.pharmacy);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [showChatModal, setShowChatModal] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>();
+  const [place, setPlace] = useState<Record<string, string>>();
 
   const [selectedPharmacy, setSelectedPharmacy] =
     useState<Record<string, any>>();
@@ -42,7 +49,6 @@ const PharmacyNearHubLanding = () => {
     const data = await res.json();
     return data;
   };
-  const [place, setPlace] = useState<Record<string, string>>();
 
   useEffect(() => {
     (async () => {
@@ -54,15 +60,17 @@ const PharmacyNearHubLanding = () => {
   }, []);
 
   // Filtrer les pharmacies
-  const filteredPharmacies = pharmacies.filter((pharmacy) => {
-    if (activeFilter === "open") return pharmacy.isOpen;
-    if (activeFilter === "24h") return pharmacy.openingHours === "24/7";
-    return true;
-  });
+  const filteredPharmacies = Object.values(dataPharmacy).filter(
+    (pharmacy: any) => {
+      if (activeFilter === "open") return pharmacy.isOpen;
+      if (activeFilter === "24h") return pharmacy.openingHours === "24/7";
+      return true;
+    }
+  );
 
   // Rechercher les pharmacies
   const searchedPharmacies = filteredPharmacies.filter(
-    (pharmacy) =>
+    (pharmacy: any) =>
       pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -88,33 +96,20 @@ const PharmacyNearHubLanding = () => {
     setSelectedPharmacy({ lat: null, lng: null });
     setShowChatModal(true);
   };
+  const pharmaciesWithDistance = useMemo(() => {
+    if (!mapCenter) return [];
 
-  const features = [
-    {
-      icon: <MapPin className="w-6 h-6" />,
-      title: "Localisation en temps réel",
-      description:
-        "Trouvez les pharmacies les plus proches de votre position actuelle ou d'un lieu choisi.",
-    },
-    {
-      icon: <Clock className="w-6 h-6" />,
-      title: "Horaires actualisés",
-      description:
-        "Consultez les heures d'ouverture et de fermeture pour aujourd'hui.",
-    },
-    {
-      icon: <MessageCircle className="w-6 h-6" />,
-      title: "Chat direct",
-      description:
-        "Communiquez directement avec une pharmacie ou avec toutes les pharmacies de la plateforme.",
-    },
-    {
-      icon: <Navigation className="w-6 h-6" />,
-      title: "Navigation intégrée",
-      description:
-        "Visualisez la distance et obtenez l'itinéraire sur une carte interactive.",
-    },
-  ];
+    return searchedPharmacies
+      .map((pharmacy: any) => ({
+        ...pharmacy,
+        distance: getDistanceKm(mapCenter, {
+          lat: pharmacy.lat,
+          lng: pharmacy.lng,
+        }),
+      }))
+      .sort((a: any, b: any) => a.distance - b.distance)
+      .slice(0, 20); // ⭐ max 20
+  }, [searchedPharmacies, mapCenter]);
 
   useEffect(() => {
     if (location) {
@@ -136,14 +131,44 @@ const PharmacyNearHubLanding = () => {
             avec toutes les informations essentielles.
           </p>
           {/*Map Section */}
-          <PharmacyMap
-            userPosition={location}
-            center={mapCenter}
-            pharmacies={searchedPharmacies}
-            onSelect={(pharmacy) => {
-              console.log("open pharmacy", pharmacy);
-            }}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
+            {/* LISTE */}
+            <div className="lg:col-span-1 bg-white rounded-xl shadow p-4 h-[500px] overflow-y-auto">
+              <h3 className="font-semibold mb-4">
+                Pharmacies proches ({pharmaciesWithDistance.length})
+              </h3>
+
+              {pharmaciesWithDistance.map((pharmacy: any) => (
+                <div
+                  key={pharmacy.id}
+                  className="border-b py-3 cursor-pointer hover:bg-gray-50"
+                  onClick={() =>
+                    setMapCenter({ lat: pharmacy.lat, lng: pharmacy.lng })
+                  }
+                >
+                  <div className="font-medium">{pharmacy.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {pharmacy.address}
+                  </div>
+                  <div className="text-sm text-blue-600 font-semibold">
+                    {pharmacy.distance.toFixed(2)} km
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* MAP */}
+            <div className="lg:col-span-2">
+              <PharmacyMap
+                userPosition={location}
+                center={mapCenter}
+                pharmacies={pharmaciesWithDistance}
+                onSelect={(pharmacy) => {
+                  console.log("open pharmacy", pharmacy);
+                }}
+              />
+            </div>
+          </div>
 
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
@@ -152,7 +177,7 @@ const PharmacyNearHubLanding = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Recherchez une pharmacie, une spécialité ou une adresse..."
+                placeholder="Recherchez une adresse ou une pharmacie ..."
                 className="w-full p-4 pl-12 pr-4 rounded-xl border-2 border-[#E5E7EB] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#6B7280]" />
@@ -178,7 +203,7 @@ const PharmacyNearHubLanding = () => {
         </div>
       </section>
 
-      <FeaturesSection features={features} />
+      <FeaturesSection />
       <PharmacySpace
         searchedPharmacies={searchedPharmacies}
         setActiveFilter={setActiveFilter}

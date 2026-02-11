@@ -1,8 +1,33 @@
-interface Props {
-  features?: any;
-}
+import { Clock, MapPin, MessageCircle, Navigation } from "lucide-react";
 
-function FeaturesSection({ features }: Props) {
+const features = [
+  {
+    icon: <MapPin className="w-6 h-6" />,
+    title: "Localisation en temps réel",
+    description:
+      "Trouvez les pharmacies les plus proches de votre position actuelle ou d'un lieu choisi.",
+  },
+  {
+    icon: <Clock className="w-6 h-6" />,
+    title: "Horaires actualisés",
+    description:
+      "Consultez les heures d'ouverture et de fermeture pour aujourd'hui.",
+  },
+  {
+    icon: <MessageCircle className="w-6 h-6" />,
+    title: "Chat direct",
+    description:
+      "Communiquez directement avec une pharmacie ou avec toutes les pharmacies de la plateforme.",
+  },
+  {
+    icon: <Navigation className="w-6 h-6" />,
+    title: "Navigation intégrée",
+    description:
+      "Visualisez la distance et obtenez l'itinéraire sur une carte interactive.",
+  },
+];
+
+function FeaturesSection() {
   return (
     <section id="features" className="container mx-auto px-4 py-12">
       <h2 className="text-3xl font-bold text-center mb-12">

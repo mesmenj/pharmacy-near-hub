@@ -3,6 +3,7 @@ import localforage from "localforage";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import uiReducer, { ui_state } from "./ui";
+import pharmacyReducer, { pharmacy_state } from "./pharmacy";
 
 // ==============================|| REDUX TOOLKIT - MAIN STORE ||============================== //
 
@@ -14,12 +15,14 @@ const persistConfig = {
 
 const initialState = {
   ui: ui_state,
+  pharmacy: pharmacy_state,
 
   //   sales: sale_state,
 };
 
 const reducers = combineReducers({
   ui: uiReducer,
+  pharmacy: pharmacyReducer,
 });
 
 const rootReducer = (state: any, action: any) => {
