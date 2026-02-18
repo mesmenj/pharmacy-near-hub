@@ -1,5 +1,4 @@
 import { MessageCircle, X } from "lucide-react";
-import React from "react";
 
 interface Props {
   isOpen: boolean;

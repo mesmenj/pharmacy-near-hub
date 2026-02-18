@@ -1,5 +1,4 @@
 import { MessageCircle } from "lucide-react";
-import React from "react";
 
 interface Props {
   handleChatWithAll?: () => void;

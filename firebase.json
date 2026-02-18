@@ -1,0 +1,6 @@
+{
+  "hosting": {
+    "site": "pharmacy-near-hub",
+    "public": "dist"
+  }
+}
