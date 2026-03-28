@@ -4,6 +4,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import uiReducer, { ui_state } from "./ui";
 import pharmacyReducer, { pharmacy_state } from "./pharmacy";
+import guardReducer, { guard_state } from "./guard";
 
 // ==============================|| REDUX TOOLKIT - MAIN STORE ||============================== //
 
@@ -16,6 +17,7 @@ const persistConfig = {
 const initialState = {
   ui: ui_state,
   pharmacy: pharmacy_state,
+  guard: guard_state,
 
   //   sales: sale_state,
 };
@@ -23,6 +25,7 @@ const initialState = {
 const reducers = combineReducers({
   ui: uiReducer,
   pharmacy: pharmacyReducer,
+  guard: guardReducer,
 });
 
 const rootReducer = (state: any, action: any) => {

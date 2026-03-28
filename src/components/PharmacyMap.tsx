@@ -42,6 +42,14 @@ export default function PharmacyMap({
   const [isMobile, setIsMobile] = useState(false);
   // const [showList, setShowList] = useState(false);
 
+  // Pan vers la pharmacie sélectionnée sans changer le centre de référence
+  useEffect(() => {
+    if (selected && map) {
+      map.panTo({ lat: selected.lat, lng: selected.lng });
+      if (isMobile) map.setZoom(16);
+    }
+  }, [selected, map]);
+
   // Détection mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -162,12 +170,12 @@ export default function PharmacyMap({
             position={{ lat: pharmacy.lat, lng: pharmacy.lng }}
             onClick={() => {
               setSelected?.(pharmacy);
-              if (isMobile && map) {
-                map.panTo({ lat: pharmacy.lat, lng: pharmacy.lng });
-                map.setZoom(16);
-              }
             }}
-            // icon={pharmacyIcon}
+            icon={
+              pharmacy.isOnGuard
+                ? "http://maps.google.com/mapfiles/ms/icons/orange-dot.png"
+                : undefined
+            }
             title={pharmacy.name}
             animation={
               selected?.id === pharmacy.id
@@ -190,9 +198,16 @@ export default function PharmacyMap({
             <div className="p-2 sm:p-3 max-w-[280px] sm:max-w-sm">
               {/* En-tête avec nom et bouton fermer */}
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-bold text-sm sm:text-base pr-6">
-                  {selected.name}
-                </h3>
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base pr-6">
+                    {selected.name}
+                  </h3>
+                  {selected.isOnGuard && (
+                    <span className="inline-block text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium mt-1">
+                      De garde
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setSelected?.(null)}
                   className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"

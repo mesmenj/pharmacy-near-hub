@@ -17,6 +17,15 @@ const PharmacyNearHubLanding = () => {
   const {} = use_init();
 
   const { dataPharmacy } = useSelector((state: STATE) => state.pharmacy);
+  const { dataGuard } = useSelector((state: STATE) => state.guard);
+
+  const guardPharmacyIds = useMemo(() => {
+    const allIds = Object.values(dataGuard || {}).flatMap(
+      (guard) => guard.pharmacies as string[]
+    );
+    return new Set(allIds);
+  }, [dataGuard]);
+
   const [selected, setSelected] = useState<PharmacyModel | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,7 +71,10 @@ const PharmacyNearHubLanding = () => {
   const filteredPharmacies = Object.values(dataPharmacy).filter(
     (pharmacy: any) => {
       if (activeFilter === "open") return pharmacy.isOpen;
-      if (activeFilter === "24h") return pharmacy.openingHours === "24/7";
+      if (activeFilter === "24h")
+        return (
+          pharmacy.openingHours === "24/7" || guardPharmacyIds.has(pharmacy.id)
+        );
       return true;
     }
   );
@@ -117,10 +129,11 @@ const PharmacyNearHubLanding = () => {
           lat: pharmacy.lat,
           lng: pharmacy.lng,
         }),
+        isOnGuard: guardPharmacyIds.has(pharmacy.id),
       }))
       .sort((a: any, b: any) => a.distance - b.distance)
       .slice(0, 20);
-  }, [searchedPharmacies, mapCenter]);
+  }, [searchedPharmacies, mapCenter, guardPharmacyIds]);
 
   useEffect(() => {
     if (location) {
@@ -263,9 +276,7 @@ const PharmacyNearHubLanding = () => {
                       key={pharmacy.id}
                       className="border rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100"
                       onClick={() => {
-                        setMapCenter({ lat: pharmacy.lat, lng: pharmacy.lng });
                         setSelected(pharmacy);
-
                         if (window.innerWidth < 1024) {
                           setShowMobileMap(true);
                         }
@@ -281,11 +292,18 @@ const PharmacyNearHubLanding = () => {
                         <span className="text-xs sm:text-sm text-blue-600 font-semibold">
                           {pharmacy.distance?.toFixed(2)} km
                         </span>
-                        {pharmacy.isOpen && (
-                          <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
-                            Ouvert
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {pharmacy.isOnGuard && (
+                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                              De garde
+                            </span>
+                          )}
+                          {pharmacy.isOpen && (
+                            <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
+                              Ouvert
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))

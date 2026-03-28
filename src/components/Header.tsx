@@ -1,15 +1,20 @@
-import { MapPin, MessageCircle, Menu, X } from "lucide-react";
+import { MapPin, MessageCircle, Menu, X, Phone, Clock, Navigation } from "lucide-react";
 import { useState } from "react";
-import ChatModal from "./ChatModal";
+import { useSelector } from "react-redux";
+import type { STATE } from "../store/state";
 
 function Header() {
-  const [showChatModal, setShowChatModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showGuardModal, setShowGuardModal] = useState(false);
 
-  const handleChatWithAll = () => {
-    setShowChatModal(true);
-    setIsMenuOpen(false); // Ferme le menu mobile si ouvert
-  };
+  const { dataGuard } = useSelector((state: STATE) => state.guard);
+  const { dataPharmacy } = useSelector((state: STATE) => state.pharmacy);
+
+  const guardPharmacies = Object.values(dataGuard || {}).flatMap((guard) =>
+    (guard.pharmacies as string[])
+      .map((id) => dataPharmacy[id])
+      .filter(Boolean)
+  );
 
   return (
     <>
@@ -54,22 +59,31 @@ function Header() {
                 Comment ça marche
               </a>
               <button
-                onClick={handleChatWithAll}
+                onClick={() => setShowGuardModal(true)}
                 className="bg-button_bg text-primary px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 lg:space-x-2 text-sm lg:text-base whitespace-nowrap"
               >
                 <MessageCircle className="w-3 h-3 lg:w-4 lg:h-4" />
-                <span>Chatter avec toutes</span>
+                <span>Pharmacies de garde du jour</span>
+                {guardPharmacies.length > 0 && (
+                  <span className="bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {guardPharmacies.length}
+                  </span>
+                )}
               </button>
             </nav>
 
-            {/* Bouton menu mobile et bouton chat mobile */}
             <div className="flex items-center space-x-2 md:hidden">
               <button
-                onClick={handleChatWithAll}
-                className="bg-button_bg text-primary p-2 rounded-lg hover:bg-blue-700 transition-colors"
-                aria-label="Chatter avec toutes les pharmacies"
+                onClick={() => setShowGuardModal(true)}
+                className="relative bg-button_bg text-primary p-2 rounded-lg hover:bg-blue-700 transition-colors"
+                aria-label="Pharmacies de garde du jour"
               >
                 <MessageCircle className="w-5 h-5" />
+                {guardPharmacies.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {guardPharmacies.length}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -119,10 +133,101 @@ function Header() {
       {/* Espacement pour le contenu en dessous du header fixe */}
       <div className="h-16 md:h-20"></div>
 
-      <ChatModal
-        isOpen={showChatModal}
-        onClose={() => setShowChatModal(false)}
-      />
+      {/* Modal pharmacies de garde */}
+      {showGuardModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setShowGuardModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header modal */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-orange-500" />
+                <h2 className="font-bold text-base sm:text-lg">
+                  Pharmacies de garde du jour
+                </h2>
+                {guardPharmacies.length > 0 && (
+                  <span className="bg-orange-100 text-orange-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                    {guardPharmacies.length}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowGuardModal(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Liste */}
+            <div className="overflow-y-auto flex-1 p-4 sm:p-5 space-y-3">
+              {guardPharmacies.length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                  <Clock className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm">Aucune pharmacie de garde aujourd'hui</p>
+                </div>
+              ) : (
+                guardPharmacies.map((pharmacy: any) => (
+                  <div
+                    key={pharmacy.id}
+                    className="border border-orange-100 bg-orange-50/40 rounded-xl p-3 sm:p-4"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3 className="font-semibold text-sm sm:text-base">
+                        {pharmacy.name}
+                      </h3>
+                      <span className="shrink-0 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                        De garde
+                      </span>
+                    </div>
+
+                    {pharmacy.address && (
+                      <p className="flex items-start gap-1.5 text-xs sm:text-sm text-gray-600 mb-1.5">
+                        <Navigation className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                        {pharmacy.address}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-4 flex-wrap">
+                      {pharmacy.phone && (
+                        <a
+                          href={`tel:${pharmacy.phone}`}
+                          className="flex items-center gap-1 text-xs sm:text-sm text-blue-600 hover:underline"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          {pharmacy.phone}
+                        </a>
+                      )}
+                      {pharmacy.openingHours && (
+                        <span className="flex items-center gap-1 text-xs sm:text-sm text-gray-500">
+                          <Clock className="w-3.5 h-3.5" />
+                          {pharmacy.openingHours}
+                        </span>
+                      )}
+                      {pharmacy.isOpen !== undefined && (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            pharmacy.isOpen
+                              ? "bg-green-100 text-green-600"
+                              : "bg-red-100 text-red-500"
+                          }`}
+                        >
+                          {pharmacy.isOpen ? "Ouvert" : "Fermé"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Styles pour les animations */}
       <style>{`

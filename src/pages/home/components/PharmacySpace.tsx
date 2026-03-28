@@ -8,7 +8,9 @@ import {
   Filter,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useSelector } from "react-redux";
+import type { STATE } from "../../../store/state";
 
 interface Props {
   searchedPharmacies?: any;
@@ -26,6 +28,14 @@ function PharmacySpace({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const { dataGuard } = useSelector((state: STATE) => state.guard);
+  const guardPharmacyIds = useMemo(() => {
+    const allIds = Object.values(dataGuard || {}).flatMap(
+      (guard) => guard.pharmacies as string[]
+    );
+    return new Set(allIds);
+  }, [dataGuard]);
+
   // Détection mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -38,7 +48,7 @@ function PharmacySpace({
 
   const filters = [
     { id: "all", label: "Toutes", icon: null },
-    { id: "open", label: "Ouvertes", icon: Clock },
+    // { id: "open", label: "Ouvertes", icon: Clock },
     { id: "24h", label: "24h/24", icon: Clock },
   ];
 
@@ -144,9 +154,16 @@ function PharmacySpace({
                 {/* En-tête avec nom et note */}
                 <div className="flex justify-between items-start gap-2 mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl font-bold mb-1 truncate">
-                      {pharmacy.name}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg sm:text-xl font-bold truncate">
+                        {pharmacy.name}
+                      </h3>
+                      {guardPharmacyIds.has(pharmacy.id) && (
+                        <span className="shrink-0 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                          De garde
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-start space-x-2">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-[#6B7280] flex-shrink-0 mt-0.5" />
                       <span className="text-xs sm:text-sm text-[#6B7280] line-clamp-2">
@@ -174,7 +191,7 @@ function PharmacySpace({
                       <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-[#6B7280]" />
                       <span className="text-xs sm:text-sm">Horaires</span>
                     </div>
-                    <div className="text-right">
+                    {/* <div className="text-right">
                       <span
                         className={`text-xs sm:text-sm font-medium ${
                           pharmacy.isOpen ? "text-green-600" : "text-red-600"
@@ -189,7 +206,7 @@ function PharmacySpace({
                       >
                         ({pharmacy.isOpen ? "Ouverte" : "Fermée"})
                       </span>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Distance */}

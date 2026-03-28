@@ -9,7 +9,7 @@ export const COLLECTIONS_NAMES = {
   PHARMACY: "PHARMACY",
   ADMIN_USER: "ADMIN_USER",
   SALES: "SALES",
-  LOGS: "LOGS",
+  GUARDS: "GUARDS",
 };
 
 export const TabTextDisable = [
