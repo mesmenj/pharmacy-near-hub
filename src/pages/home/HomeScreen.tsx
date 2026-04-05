@@ -68,15 +68,18 @@ const PharmacyNearHubLanding = () => {
   }, []);
 
   // Filtrer les pharmacies
-  const filteredPharmacies = Object.values(dataPharmacy).filter(
-    (pharmacy: any) => {
-      if (activeFilter === "open") return pharmacy.isOpen;
-      if (activeFilter === "24h")
-        return (
-          pharmacy.openingHours === "24/7" || guardPharmacyIds.has(pharmacy.id)
-        );
-      return true;
-    }
+  const filteredPharmacies = useMemo(
+    () =>
+      Object.values(dataPharmacy).filter((pharmacy: any) => {
+        if (activeFilter === "open") return pharmacy.isOpen;
+        if (activeFilter === "24h")
+          return (
+            pharmacy.openingHours === "24/7" ||
+            guardPharmacyIds.has(pharmacy.id)
+          );
+        return true;
+      }),
+    [dataPharmacy, activeFilter, guardPharmacyIds]
   );
 
   // Pharmacies avec distance depuis l'utilisateur
@@ -95,10 +98,14 @@ const PharmacyNearHubLanding = () => {
   }, [location, filteredPharmacies]);
 
   // Pharmacies recherchées
-  const searchedPharmacies = filteredPharmacies.filter(
-    (pharmacy: any) =>
-      pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
+  const searchedPharmacies = useMemo(
+    () =>
+      filteredPharmacies.filter(
+        (pharmacy: any) =>
+          pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [filteredPharmacies, searchQuery]
   );
 
   const handleSearch = async (e: any) => {

@@ -11,7 +11,7 @@ import guardReducer, { guard_state } from "./guard";
 const persistConfig = {
   key: "pharmacy-near-web",
   storage: localforage,
-  blackList: ["ui"],
+  blackList: ["ui", "guard"],
 };
 
 const initialState = {

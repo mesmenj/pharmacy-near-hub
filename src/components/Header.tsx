@@ -1,5 +1,13 @@
-import { MapPin, MessageCircle, Menu, X, Phone, Clock, Navigation } from "lucide-react";
-import { useState } from "react";
+import {
+  MapPin,
+  MessageCircle,
+  Menu,
+  X,
+  Phone,
+  Clock,
+  Navigation,
+} from "lucide-react";
+import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import type { STATE } from "../store/state";
 
@@ -7,14 +15,30 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showGuardModal, setShowGuardModal] = useState(false);
 
-  const { dataGuard } = useSelector((state: STATE) => state.guard);
+  const { dataGuard } = useSelector((state: STATE) => state.guard) as any;
   const { dataPharmacy } = useSelector((state: STATE) => state.pharmacy);
 
-  const guardPharmacies = Object.values(dataGuard || {}).flatMap((guard) =>
-    (guard.pharmacies as string[])
-      .map((id) => dataPharmacy[id])
-      .filter(Boolean)
+  const guardPharmacyIds = useMemo(
+    () =>
+      new Set(
+        Object.values(dataGuard || {}).flatMap(
+          (guard: any) => guard.pharmacies as string[]
+        )
+      ),
+    [dataGuard]
   );
+
+  const guardPharmacies = useMemo(
+    () =>
+      Object.values(dataPharmacy || {}).filter((pharmacy: any) =>
+        guardPharmacyIds.has(pharmacy.id)
+      ),
+    [dataPharmacy, guardPharmacyIds]
+  );
+  // console.log("dataGuard in Header", guardPharmacies);
+  // .flatMap((guard) =>
+  // (guard.pharmacies as string[]).map((id) => dataPharmacy[id]).filter(Boolean)
+  // );
 
   return (
     <>
@@ -169,7 +193,9 @@ function Header() {
               {guardPharmacies.length === 0 ? (
                 <div className="text-center py-10 text-gray-500">
                   <Clock className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                  <p className="text-sm">Aucune pharmacie de garde aujourd'hui</p>
+                  <p className="text-sm">
+                    Aucune pharmacie de garde aujourd'hui
+                  </p>
                 </div>
               ) : (
                 guardPharmacies.map((pharmacy: any) => (

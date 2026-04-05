@@ -25,12 +25,8 @@ const guardcySlice = createSlice({
   initialState: guard_state,
   reducers: {
     createGuard(state, { payload }: { payload: GuardModel | any }) {
-      state.dataGuard[payload.id] = {
-        ...state.dataGuard[payload.id],
-        ...payload,
-        // createdAt: fromFirebaseToJs(payload?.createdAt),
-        // updatedAt: fromFirebaseToJs(payload?.updatedAt),
-      };
+      state.dataGuard = payload;
+      return state;
     },
     setloadingGuard(state, { payload }) {
       state.loadingGuard = payload;
