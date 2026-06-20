@@ -29,11 +29,8 @@ function PharmacySpace({
   const [isMobile, setIsMobile] = useState(false);
 
   const { dataGuard } = useSelector((state: STATE) => state.guard);
-  const guardPharmacyIds = useMemo(() => {
-    const allIds = Object.values(dataGuard || {}).flatMap(
-      (guard) => guard.pharmacies as string[]
-    );
-    return new Set(allIds);
+  const guardPharmacyIds: any = useMemo(() => {
+    return Array.isArray(dataGuard?.pharmacies) ? dataGuard.pharmacies : [];
   }, [dataGuard]);
 
   // Détection mobile
@@ -51,6 +48,16 @@ function PharmacySpace({
     // { id: "open", label: "Ouvertes", icon: Clock },
     { id: "24h", label: "24h/24", icon: Clock },
   ];
+
+  const displayedPharmacies = useMemo(() => {
+    if (activeFilter === "24h") {
+      return searchedPharmacies.filter((pharmacy: any) =>
+        guardPharmacyIds.includes(pharmacy.id)
+      );
+    }
+
+    return searchedPharmacies;
+  }, [activeFilter, searchedPharmacies, guardPharmacyIds]);
 
   return (
     <section id="pharmacies" className="container mx-auto px-4 py-8 md:py-12">
@@ -144,8 +151,8 @@ function PharmacySpace({
 
       {/* Grille des pharmacies */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {searchedPharmacies.length > 0 ? (
-          searchedPharmacies.map((pharmacy: any) => (
+        {displayedPharmacies.length > 0 ? (
+          displayedPharmacies.map((pharmacy: any) => (
             <div
               key={pharmacy.id}
               className="group bg-white rounded-xl shadow-sm border border-[#E5E7EB] hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
@@ -158,7 +165,7 @@ function PharmacySpace({
                       <h3 className="text-lg sm:text-xl font-bold truncate">
                         {pharmacy.name}
                       </h3>
-                      {guardPharmacyIds.has(pharmacy.id) && (
+                      {guardPharmacyIds.includes(pharmacy.id) && (
                         <span className="shrink-0 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
                           De garde
                         </span>

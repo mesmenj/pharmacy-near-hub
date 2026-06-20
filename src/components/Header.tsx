@@ -17,24 +17,19 @@ function Header() {
 
   const { dataGuard } = useSelector((state: STATE) => state.guard) as any;
   const { dataPharmacy } = useSelector((state: STATE) => state.pharmacy);
+  // console.log("dataGuard in Header", dataGuard);
 
-  const guardPharmacyIds = useMemo(
-    () =>
-      new Set(
-        Object.values(dataGuard || {}).flatMap(
-          (guard: any) => guard.pharmacies as string[]
-        )
-      ),
-    [dataGuard]
-  );
+  // console.log("dataGuard in Header", dataGuard);
 
-  const guardPharmacies = useMemo(
-    () =>
-      Object.values(dataPharmacy || {}).filter((pharmacy: any) =>
-        guardPharmacyIds.has(pharmacy.id)
-      ),
-    [dataPharmacy, guardPharmacyIds]
-  );
+  const guardPharmacyIds = useMemo(() => {
+    return Array.isArray(dataGuard?.pharmacies) ? dataGuard.pharmacies : [];
+  }, [dataGuard]);
+
+  const guardPharmacies = useMemo(() => {
+    return Object.values(dataPharmacy || {}).filter((pharmacy: any) =>
+      guardPharmacyIds.includes(pharmacy.id)
+    );
+  }, [dataPharmacy, guardPharmacyIds]);
   // console.log("dataGuard in Header", guardPharmacies);
   // .flatMap((guard) =>
   // (guard.pharmacies as string[]).map((id) => dataPharmacy[id]).filter(Boolean)
